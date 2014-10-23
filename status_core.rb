@@ -1,13 +1,14 @@
 class StatusCore
-  attr_accessor :added_status_list, :parent_type, :base_status_list
+  attr_accessor :added_status_list, :parent_type, :base_status_list, :status_instance
 
-  def self.build(&block)
+  def self.build(instace, &block)
     raise "Block should given for building status" unless block_given?
-    StatusCore.new(&block)
+    StatusCore.new(instace, &block)
   end
 
-  def initialize(&block)
-    if block_given?
+  def initialize(instace, &block)
+    if block_given? and !instace.nil?
+      self.status_instance = instace
       self.added_status_list = []
       instance_eval &block
     end
@@ -46,9 +47,13 @@ class StatusCore
     self.parent_type = base_type
   end
 
-  def add_option(status_id, message)
+  def add_option(status_id, message, constName)
     raise "base_status_type should assign before!" if self.parent_type.nil?
-    self.added_status_list << { key: status_id, message: message, parent_type: self.parent_type }
+    raise "'const' should assign!" if constName.nil?
+    raise "'const' should be without spaces or any symbols!" if constName =~ /(\-|\s|\-|\?|\!|\.|\,)/
+    self.status_instance.const_set(constName, status_id)
+
+    self.added_status_list << { key: status_id, message: message, parent_type: self.parent_type, const_name: constName }
   end
 
   private :add_option, :base_status_type
